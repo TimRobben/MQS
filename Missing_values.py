@@ -5,7 +5,6 @@ import pandas as pd
 # print(data.shape, deta.shape)
 # percent_missing = data.isnull().sum() * 100 / len(data)
 # print(percent_missing)
-import pandas as pd
 
 def linear_interpolate_and_save(data_path, output_path):
     """
@@ -39,6 +38,6 @@ def linear_interpolate_and_save(data_path, output_path):
     print(data_interpolated.head())
 
 # Example usage
-data_path = "Data/Output/cleaned_data_tim_run1.csv"
-output_path = 'Data/output/interpolated_data.csv'
+data_path = "data/merged_data_tim_run_1.csv"
+output_path = 'Data/output/interpolated_tim_run_1.csv'
 linear_interpolate_and_save(data_path, output_path)
