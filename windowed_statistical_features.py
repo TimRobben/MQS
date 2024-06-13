@@ -1,6 +1,7 @@
 original_data = pd.read_csv('/content/merged_data_viv_run_1.csv', delimiter =',')
 
 # stastistical features for location data
+combined_df = combined_df.drop(columns =['Latitude (°)', 'Longitude (°)', 'Direction (°)', 'Horizontal Accuracy (m)',	'Vertical Accuracy (°)'])
 # Define the time window size (30 seconds) and minimum data points per window
 window_size = 30  # in seconds
 min_data_points = 10
