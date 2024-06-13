@@ -49,11 +49,12 @@ def apply_lowpass_filter_and_save(data_path, output_path, cutoff, fs, order=5):
 
     # Display the data with filtered values
     print("Data after low-pass filtering:")
-    print(data.head())
+    print(data.head(), data.shape)
+
 
 # Example usage
 data_path = 'data/merged_data_tim_run1.csv'
-output_path = './output/filtered_data.csv'
+output_path = 'Data/output/filtered_data.csv'
 cutoff = 0.1  # Cutoff frequency as a fraction of the sampling rate
 fs = 1.0  # Sampling rate, adjust based on your data
 

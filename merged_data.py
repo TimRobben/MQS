@@ -27,7 +27,7 @@ combined_df = pd.concat([pop_combined_df, rock_combined_df, classic_combined_df]
 print(combined_df)
 
 # add ID label
-combined_df.insert(0, 'id', 1)
+combined_df.insert(0, 'id', 5)
 
 # save to csv
 combined_df.to_csv('Data/merged_data_tim_run_2.csv')
