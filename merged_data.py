@@ -1,12 +1,12 @@
 import pandas as pd
 
-acc_pop = pd.read_csv('/content/Accelerometer judith pop 2.csv', delimiter =',')
-acc_rock = pd.read_csv('/content/Accelerometer judith rock 2.csv', delimiter =',')
-acc_classic = pd.read_csv('/content/Accelerometer judith classic 2.csv', delimiter =',')
+acc_pop = pd.read_csv('Data/Tim_dance2/Accelerometer.csv', delimiter =',')
+acc_rock = pd.read_csv('Data/Tim_rock2/Accelerometer.csv', delimiter =',')
+acc_classic = pd.read_csv('Data/Tim_jazz2/Accelerometer.csv', delimiter =',')
 
-lin_acc_pop = pd.read_csv('/content/Linear Accelerometer judith pop 2.csv', delimiter =',')
-lin_acc_rock = pd.read_csv('/content/Linear Accelerometer judith rock 2.csv', delimiter =',')
-lin_acc_classic = pd.read_csv('/content/Linear Accelerometer judith classic 2.csv', delimiter =',')
+lin_acc_pop = pd.read_csv('Data/Tim_dance2/Linear Accelerometer.csv', delimiter =',')
+lin_acc_rock = pd.read_csv('Data/Tim_rock2/Linear Accelerometer.csv', delimiter =',')
+lin_acc_classic = pd.read_csv('Data/Tim_jazz2/Linear Accelerometer.csv', delimiter =',')
 
 # Merge the individual genre datasets into one dataset per genre
 
@@ -16,9 +16,9 @@ classic_combined_df = pd.merge(acc_classic, lin_acc_classic, on='Time (s)', how=
 
 # create genre labels
 
-pop_combined_df['genre'] = 'Pop'
+pop_combined_df['genre'] = 'Dance'
 rock_combined_df['genre'] = 'Rock'
-classic_combined_df['genre'] = 'Classic'
+classic_combined_df['genre'] = 'Jazz'
 
 # Concatenate the DataFrames
 combined_df = pd.concat([pop_combined_df, rock_combined_df, classic_combined_df], ignore_index=True)
@@ -30,7 +30,7 @@ print(combined_df)
 combined_df.insert(0, 'id', 1)
 
 # save to csv
-combined_df.to_csv('merged_data_judith_run_2.csv')
+combined_df.to_csv('Data/merged_data_tim_run_2.csv')
 
 # @title genre vs X (m/s^2)_acc
 
@@ -41,3 +41,4 @@ plt.figure(figsize=figsize)
 sns.violinplot(combined_df, x='X (m/s^2)_acc', y='genre', inner='box', palette='Dark2')
 sns.despine(top=True, right=True, bottom=True, left=True)
 plt.title('X acceleration for each genre for id 1')
+plt.show()
