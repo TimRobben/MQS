@@ -38,6 +38,6 @@ def linear_interpolate_and_save(data_path, output_path):
     print(data_interpolated.head())
 
 # Example usage
-data_path = "Full_data/full_dataset_judith_run_1.csv"
-output_path = 'Data/output/interpolated_tim_run_1.csv'
+data_path = "Data/Full_data/full_orig_data/full_dataset_tim_run_1.csv"
+output_path = 'Data/Full_data/Ouput/full_inter_tim_run_1.csv'
 linear_interpolate_and_save(data_path, output_path)
