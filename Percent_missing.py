@@ -9,4 +9,5 @@ def percent_missing(path):
     #print("missing values:", missing)
     percent_missing = data.isnull().sum() * 100 / len(data)
     print("percentage missing:", percent_missing)
-    
+
+#percent_missing('Full_data/full_dataset_tim_run_1.csv')
