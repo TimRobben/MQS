@@ -1,12 +1,12 @@
 import pandas as pd
 
-acc_pop = pd.read_csv('Data/Tim_dance2/Accelerometer.csv', delimiter =',')
-acc_rock = pd.read_csv('Data/Tim_rock2/Accelerometer.csv', delimiter =',')
-acc_classic = pd.read_csv('Data/Tim_jazz2/Accelerometer.csv', delimiter =',')
+acc_pop = pd.read_csv('Data/Dance_tim_1/Accelerometer.csv', delimiter =',')
+acc_rock = pd.read_csv('Data/Rock_tim_1/Accelerometer.csv', delimiter =',')
+acc_classic = pd.read_csv('Data/Jazz_tim_1/Accelerometer.csv', delimiter =',')
 
-lin_acc_pop = pd.read_csv('Data/Tim_dance2/Linear Accelerometer.csv', delimiter =',')
-lin_acc_rock = pd.read_csv('Data/Tim_rock2/Linear Accelerometer.csv', delimiter =',')
-lin_acc_classic = pd.read_csv('Data/Tim_jazz2/Linear Accelerometer.csv', delimiter =',')
+lin_acc_pop = pd.read_csv('Data/Dance_tim_1/Linear Accelerometer.csv', delimiter =',')
+lin_acc_rock = pd.read_csv('Data/Rock_tim_1/Linear Accelerometer.csv', delimiter =',')
+lin_acc_classic = pd.read_csv('Data/Jazz_tim_1/Linear Accelerometer.csv', delimiter =',')
 
 # Merge the individual genre datasets into one dataset per genre
 
@@ -30,7 +30,7 @@ print(combined_df)
 combined_df.insert(0, 'id', 5)
 
 # save to csv
-combined_df.to_csv('Data/merged_data_tim_run_2.csv')
+combined_df.to_csv('Data/merged_data_tim_run_1.csv')
 
 # @title genre vs X (m/s^2)_acc
 
