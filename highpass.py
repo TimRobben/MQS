@@ -86,7 +86,7 @@ def apply_highpass_filter(data_path, output_path, cutoff, fs, order=5):
         filtered_data = highpass_filter(data[feature].values, cutoff, fs, order)
         
         # Visualize the original and filtered data
-        visualize_filtered_data(data[feature].values, filtered_data, feature, f'{feature} - Original vs. Filtered')
+        #visualize_filtered_data(data[feature].values, filtered_data, feature, f'{feature} - Original vs. Filtered')
 
         # Store the filtered data back to the DataFrame
         data[f'filtered_{feature}'] = filtered_data
@@ -100,8 +100,8 @@ def apply_highpass_filter(data_path, output_path, cutoff, fs, order=5):
     print(data.head())
 
 # Example usage
-data_path = 'Data/Full_data/full_orig_data/full_dataset_tim_run_1.csv'
-output_path = 'data/full_data/hp_data/filtered_data_highpass.csv'
+data_path = 'Data/Full_data/full_orig_data/full_dataset_viv_run_2.csv'
+output_path = 'data/full_data/hp_data/highpass_vivian_run_2.csv'
 cutoff = 2.5  # Cutoff frequency in Hz
 fs = 50  # Sampling rate in Hz
 

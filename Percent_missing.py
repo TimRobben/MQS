@@ -10,4 +10,10 @@ def percent_missing(path):
     percent_missing = data.isnull().sum() * 100 / len(data)
     print("percentage missing:", percent_missing)
 
-#percent_missing('Full_data/full_dataset_tim_run_1.csv')
+#percent_missing('Data/Full_data/full_orig_data/full_dataset_viv_run_1.csv')
+
+def remove_first_2_columns(path):
+    df = pd.read_csv(path)
+    df.drop(df.columns[df.columns.str.contains('^Unnamed')], axis=1, inplace=True)
+
+remove_first_2_columns('Data/Full_data/hp_data/highpass_judith_run_1.csv')
