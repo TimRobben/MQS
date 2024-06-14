@@ -15,5 +15,6 @@ def percent_missing(path):
 def remove_first_2_columns(path):
     df = pd.read_csv(path)
     df.drop(df.columns[df.columns.str.contains('^Unnamed')], axis=1, inplace=True)
+    df.to_csv(path, index=False)
 
-remove_first_2_columns('Data/Full_data/hp_data/highpass_judith_run_1.csv')
+remove_first_2_columns('Data/Full_data/hp_data/highpass_vivian_run_2.csv')
