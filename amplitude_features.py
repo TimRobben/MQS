@@ -5,7 +5,7 @@ from scipy.signal import welch
 from scipy.stats import entropy
 
 # Load your dataset and rename columns
-df = pd.read_csv('/content/full_dataset_viv_run_1.csv')
+df = pd.read_csv('/content/dataset_viv_2_run.csv')
 df.rename(columns={
     'Time (s)': 'Time',
     'X (m/s^2)_acc': 'AccX',
@@ -18,63 +18,69 @@ df.rename(columns={
     'Velocity (m/s)': 'Velocity'
 }, inplace=True)
 
-# Define parameters
-fs = 50  # Sampling rate (Hz)
-window_size = 5 * fs  # Window size (e.g., 5 seconds)
-overlap = 0.5  # Overlap percentage (e.g., 50% overlap)
+# Assuming you have a 'genre' column in your dataset
+genres = df['genre'].unique()  # List of unique genres
+print("Genres:", genres)
 
-# Function to compute frequency domain features
+fs = 50  # Sampling rate (Hz)
+window_size = 30 * fs  # Window size (e.g., 30 seconds)
+
+# compute the frequency features
 def compute_frequency_features(data, fs):
     N = len(data)
     yf = fft(data)
     xf = fftfreq(N, 1/fs)[:N//2]
     magnitude = 2.0 / N * np.abs(yf[0:N//2])
     
-    # 1. Frequency with highest amplitude
+    # Frequency with highest amplitude
     max_amplitude_freq = xf[np.argmax(magnitude)]
     
-    # 2. Frequency weighted signal average
+    # Total amplitude
     total_amplitude = np.sum(magnitude)
+    
+    # Frequency weighted signal average
     weighted_avg_freq = np.sum(xf * magnitude) / total_amplitude if total_amplitude != 0 else 0
     
-    # 3. Power spectral entropy
+    # Power spectral entropy
     frequencies, psd = welch(data, fs, nperseg=min(256, N))
     normalized_psd = psd / np.sum(psd)
     spectral_entropy = entropy(normalized_psd)
     
-    return max_amplitude_freq, weighted_avg_freq, spectral_entropy
+    return max_amplitude_freq, total_amplitude, weighted_avg_freq, spectral_entropy
 
-# Initialize lists to store features
-window_indices = []
-max_amplitude_freqs = []
-weighted_avg_freqs = []
-spectral_entropies = []
+# Initialize lists to store aggregated features
+agg_max_amplitude_freq = []
+agg_total_amplitude = []
+agg_weighted_avg_freq = []
+agg_spectral_entropy = []
+agg_genre = []
 
-# Iterate over time windows
-start = 0
-while start + window_size <= len(df):
-    end = start + window_size
-    window_data = df['AccX'].values[start:end]
-    
-    max_amp_freq, weighted_avg_freq, spec_entropy = compute_frequency_features(window_data, fs)
-    
-    window_indices.append(start)
-    max_amplitude_freqs.append(max_amp_freq)
-    weighted_avg_freqs.append(weighted_avg_freq)
-    spectral_entropies.append(spec_entropy)
-    
-    start += int(window_size * (1 - overlap))
+# loop over genres
+for genre in genres:
+    genre_data = df[df['genre'] == genre]
+    num_windows = len(genre_data) // window_size
 
-# Create DataFrame to store features
-features_df = pd.DataFrame({
-    'WindowStartIndex': window_indices,
-    'MaxAmplitudeFreq': max_amplitude_freqs,
-    'WeightedAvgFreq': weighted_avg_freqs,
-    'SpectralEntropy': spectral_entropies
+    # loop over timepoints within a window
+    for i in range(num_windows):
+        start = i * window_size
+        end = start + window_size
+        window_data = genre_data['AccX'].values[start:end]
+        
+        max_amp_freq, total_amp, weighted_avg_freq, spec_entropy = compute_frequency_features(window_data, fs)
+        
+        agg_max_amplitude_freq.append(max_amp_freq)
+        agg_total_amplitude.append(total_amp)
+        agg_weighted_avg_freq.append(weighted_avg_freq)
+        agg_spectral_entropy.append(spec_entropy)
+        agg_genre.append(genre)
+
+# Create DataFrame to store aggregated features
+agg_features_df = pd.DataFrame({
+    'Genre': agg_genre,
+    'Agg_MaxAmplitudeFreq': agg_max_amplitude_freq,
+    'Agg_TotalAmplitude': agg_total_amplitude,
+    'Agg_WeightedAvgFreq': agg_weighted_avg_freq,
+    'Agg_SpectralEntropy': agg_spectral_entropy
 })
 
-# Merge features_df with original DataFrame based on time window indices
-df = pd.merge_asof(df, features_df, left_index=True, right_on='WindowStartIndex', direction='backward')
 
-# Output or use df with added features
-print(df.head())
