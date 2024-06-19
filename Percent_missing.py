@@ -1,5 +1,50 @@
 import pandas as pd
 import numpy as np
+import pandas as pd
+import os
+
+def merge_csv_files(directory_path, output_file):
+    """
+    Merges all CSV files in the specified directory into a single DataFrame and saves it to an output file.
+
+    Parameters:
+    directory_path (str): The path to the directory containing the CSV files.
+    output_file (str): The path to the output CSV file.
+
+    Returns:
+    pd.DataFrame: The merged DataFrame.
+    """
+    # Initialize an empty list to hold the DataFrames
+    dataframes = []
+
+    # Iterate over all files in the directory
+    for filename in os.listdir(directory_path):
+        if filename.endswith('.csv'):
+            # Construct the full file path
+            file_path = os.path.join(directory_path, filename)
+            
+            # Read the CSV file into a DataFrame
+            df = pd.read_csv(file_path)
+            
+            # Append the DataFrame to the list
+            dataframes.append(df)
+
+    # Concatenate all DataFrames in the list into a single DataFrame
+    merged_df = pd.concat(dataframes, ignore_index=True)
+
+    # Optionally, save the merged DataFrame to a new CSV file
+    merged_df.to_csv(output_file, index=False)
+
+    return merged_df
+
+# Example usage
+directory_path = 'Data/Full_data/hp_data'  # Update with your directory path
+output_file = 'Data/Full_data/hp_data/merged_output.csv'  # Update with your desired output file path
+merged_df = merge_csv_files(directory_path, output_file)
+
+# Display the merged DataFrame
+print("Merged DataFrame:")
+print(merged_df)
 
 def percent_missing(path):
     data = pd.read_csv(path)
@@ -10,10 +55,13 @@ def percent_missing(path):
     percent_missing = data.isnull().sum() * 100 / len(data)
     print("percentage missing:", percent_missing)
 
-#percent_missing('Data/Full_data/full_orig_data/full_dataset_viv_run_1.csv')
+percent_missing('Data/Full_data/hp_data/merged_output.csv')
 
 def remove_first_2_columns(path):
     df = pd.read_csv(path)
     df.drop(df.columns[df.columns.str.contains('^Unnamed')], axis=1, inplace=True)
+    if 'filtered_Unnamed: 0.1' in df.columns:
+        df.drop(columns=['filtered_Unnamed: 0.1'], inplace=True)
+    df.to_csv(path, index=False)
 
-remove_first_2_columns('Data/Full_data/hp_data/highpass_judith_run_1.csv')
+#remove_first_2_columns('Data/Full_data/hp_data/highpass_vivian_run_2.csv')

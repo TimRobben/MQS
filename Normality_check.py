@@ -4,7 +4,7 @@ from scipy.stats import shapiro, kstest, anderson
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
-data = pd.read_csv("Data/merged_data_tim_run1.csv")
+data = pd.read_csv("Data/Full_data/hp_data/highpass_tim_run_1.csv")
 
 numeric_features = data.select_dtypes(include=[np.number]).columns.tolist()
 numeric_features.remove('id')
