@@ -38,24 +38,24 @@ def merge_csv_files(directory_path, output_file):
     return merged_df
 
 # Example usage
-# directory_path = 'Data/Full_data/hp_data'  # Update with your directory path
-# output_file = 'E:\VU\VU jaar 1\MQS\merged_final.csv'  # Update with your desired output file path
-# merged_df = merge_csv_files(directory_path, output_file)
+directory_path = 'E:\VU\VU jaar 1\MQS'  # Update with your directory path
+output_file = 'E:\VU\VU jaar 1\MQS\merged_final.csv'  # Update with your desired output file path
+merged_df = merge_csv_files(directory_path, output_file)
 
-# # Display the merged DataFrame
-# print("Merged DataFrame:")
-# print(merged_df)
+# Display the merged DataFrame
+print("Merged DataFrame:")
+print(merged_df)
 
 def percent_missing(path):
     data = pd.read_csv(path)
     #deta = pd.read_csv("Data/merged_data_tim_run1.csv")
-    print(data.shape)
+    #print(data.shape)
     missing = data.isnull().sum()
     #print("missing values:", missing)
     percent_missing = data.isnull().sum() * 100 / len(data)
     print("percentage missing:", percent_missing)
 
-#percent_missing('Data/Full_data/hp_data/highpass_vivian_run_2.csv')
+#percent_missing('Data/Full_data/full_orig_data/full_dataset_judith_run_1.csv')
 
 def remove_first_2_columns(path):
     df = pd.read_csv(path)
@@ -65,4 +65,4 @@ def remove_first_2_columns(path):
     df.to_csv(path, index=False)
     percent_missing(path)
 
-remove_first_2_columns('Data/Full_data/hp_data/highpass_judith_run_2.csv')
+#remove_first_2_columns('Data/Full_data/hp_data/highpass_judith_run_2.csv')
