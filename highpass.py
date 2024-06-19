@@ -100,8 +100,8 @@ def apply_highpass_filter(data_path, output_path, cutoff, fs, order=5):
     print(data.head())
 
 # Example usage
-data_path = 'Data/Full_data/full_orig_data/full_dataset_viv_run_2.csv'
-output_path = 'data/full_data/hp_data/highpass_vivian_run_2.csv'
+data_path = 'Data/Full_data/full_orig_data/full_dataset_joris_run2.csv'
+output_path = 'Data/Full_data/hp_data/highpass_joris_run_2.csv'
 cutoff = 2.5  # Cutoff frequency in Hz
 fs = 50  # Sampling rate in Hz
 
