@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split, StratifiedGroupKFold
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -8,80 +8,94 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import numpy as np
 import matplotlib.pyplot as plt
 
-def load_and_split_data(file_path, test_size=0.2, random_state=42):
+def load_and_split_data(file_path, n_splits=5, random_state=42):
     """
-    Load the dataset, separate features and target, and split into training and testing sets,
-    ensuring that the split maintains the proportion of subjects.
+    Load the dataset, separate features and target, and split into training and testing sets
+    using stratified group k-fold cross-validation to ensure that each group is in the test set once.
     
     Parameters:
     file_path (str): Path to the CSV file
-    test_size (float): Proportion of the dataset to include in the test split
+    n_splits (int): Number of splits for cross-validation
     random_state (int): Random seed for reproducibility
     
     Returns:
-    tuple: Training and testing features and labels (X_train, X_test, y_train, y_test)
+    generator: A generator yielding train-test splits (X_train, X_test, y_train, y_test)
     """
     # Load the dataset
     data = pd.read_csv(file_path)
-    # features = ['height_std', 'Z_lin_acc_std', 'X_acc_std', 'Z_acc_std', 'Agg_WeightedAvgFreq', 
-    #             'Agg_SpectralEntropy', 'Agg_TotalAmplitude', 'velocity_std', 'Y_acc_std', 'X_lin_acc_std', 
-    #             'velocity_median', 'Agg_MaxAmplitudeFreq', 'velocity_mean', 'Y_acc_mean', 'Y_lin_acc_mean', 
-    #             'Y_lin_acc_std', 'Time (s)', 'height_mean', 'X_acc_mean', 'X_lin_acc_mean', 'Z_lin_acc_mean', 
-    #             'Z_acc_mean', 'height_median']
+    
     # Separate features and target
     X = data.drop(columns=['id', 'genre'])
-    # Select specified features and target
-    # X = data[features]
     y = data['genre']
     groups = data['id']
     
     # Stratified group k-fold to maintain subject distribution
-    sgkf = StratifiedGroupKFold(n_splits=int(1/test_size), shuffle=True, random_state=random_state)
-    train_idx, test_idx = next(sgkf.split(X, y, groups))
+    sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
     
-    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-    y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-    
-    return X_train, X_test, y_train, y_test
+    for train_idx, test_idx in sgkf.split(X, y, groups):
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+        yield X_train, X_test, y_train, y_test
 
-def train_evaluate_knn(X_train, X_test, y_train, y_test, n_neighbors=5):
+def train_evaluate_knn_cv(file_path, n_neighbors=5, n_splits=5):
     """
-    Train and evaluate a k-NN classifier.
+    Train and evaluate a k-NN classifier using cross-validation with group splits.
     
     Parameters:
-    X_train (pd.DataFrame): Training features
-    X_test (pd.DataFrame): Testing features
-    y_train (pd.Series): Training labels
-    y_test (pd.Series): Testing labels
+    file_path (str): Path to the CSV file
     n_neighbors (int): Number of neighbors for k-NN
+    n_splits (int): Number of splits for cross-validation
     
     Returns:
-    dict: A dictionary containing accuracy, classification report, and predictions
+    dict: A dictionary containing average accuracy and classification report
     """
-    # Define the preprocessor
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', StandardScaler(), X_train.columns)
+    accuracies = []
+    classification_reports = []
+
+    for X_train, X_test, y_train, y_test in load_and_split_data(file_path, n_splits=n_splits):
+        # Define the preprocessor
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', StandardScaler(), X_train.columns)
+            ])
+
+        # Define the k-NN model
+        knn_model = Pipeline(steps=[
+            ('preprocessor', preprocessor),
+            ('classifier', KNeighborsClassifier(n_neighbors=n_neighbors))
         ])
-    
-    # Define the k-NN model
-    knn_model = Pipeline(steps=[
-        ('preprocessor', preprocessor),
-        ('classifier', KNeighborsClassifier(n_neighbors=n_neighbors))
-    ])
-    
-    # Train the k-NN model
-    knn_model.fit(X_train, y_train)
-    
-    # Predict and evaluate
-    y_pred_knn = knn_model.predict(X_test)
-    knn_accuracy = accuracy_score(y_test, y_pred_knn)
-    knn_classification_report = classification_report(y_test, y_pred_knn, target_names=np.unique(y_train))
-    
+
+        # Train the k-NN model
+        knn_model.fit(X_train, y_train)
+
+        # Predict and evaluate
+        y_pred_knn = knn_model.predict(X_test)
+        knn_accuracy = accuracy_score(y_test, y_pred_knn)
+        knn_classification_report = classification_report(y_test, y_pred_knn, target_names=np.unique(y_train), output_dict=True)
+
+        accuracies.append(knn_accuracy)
+        classification_reports.append(knn_classification_report)
+
+        # Plot confusion matrix for the current fold
+        plot_confusion_matrix(y_test, y_pred_knn, np.unique(y_train))
+
+    avg_accuracy = np.mean(accuracies)
+
+    # Function to compute the mean of nested dictionaries
+    def mean_nested_dicts(dicts):
+        mean_dict = {}
+        for key in dicts[0].keys():
+            if isinstance(dicts[0][key], dict):
+                mean_dict[key] = mean_nested_dicts([d[key] for d in dicts])
+            else:
+                mean_dict[key] = np.mean([d[key] for d in dicts])
+        return mean_dict
+
+    avg_classification_report = mean_nested_dicts(classification_reports)
+
     return {
-        'accuracy': knn_accuracy,
-        'classification_report': knn_classification_report,
-        'y_pred': y_pred_knn
+        'accuracy': avg_accuracy,
+        'classification_report': avg_classification_report
     }
 
 def plot_confusion_matrix(y_true, y_pred, class_names):
@@ -99,30 +113,16 @@ def plot_confusion_matrix(y_true, y_pred, class_names):
     fig, ax = plt.subplots(figsize=(10, 7))
     cmd.plot(ax=ax, cmap='Blues')
     plt.title('Confusion Matrix')
-    plt.savefig('Data/Full_data/hp_data/Confusion_matrix.png')
-    plt.show()
+    #plt.show()
 
 # Example usage
-file_path = 'E:\VU\VU jaar 1\MQS\\filtered_features_df.csv'
-X_train, X_test, y_train, y_test = load_and_split_data(file_path)
-#neighbors_list = range(1, 21)
-neighbors_list = [2]
+file_path = 'E:/VU/VU jaar 1/MQS/full_dataset_with_features.csv'
 
-accuracies = []
+# Train and evaluate the k-NN model using 5-fold cross-validation
+n_neighbors = 10
+cv_results = train_evaluate_knn_cv(file_path, n_neighbors=n_neighbors, n_splits=5)
 
-for n_neighbors in neighbors_list:
-    knn_results = train_evaluate_knn(X_train, X_test, y_train, y_test, n_neighbors=n_neighbors)
-    accuracies.append(knn_results['accuracy'])
-    print(f"Number of Neighbors: {n_neighbors}")
-    print(f"Accuracy: {knn_results['accuracy']:.4f}")
-    print(knn_results['classification_report'])
-    plot_confusion_matrix(y_test, knn_results['y_pred'], np.unique(y_train))
-
-#Plot accuracy vs. number of neighbors
-plt.figure(figsize=(10, 6))
-plt.plot(neighbors_list, accuracies, marker='o')
-plt.title('Accuracy vs. Number of Neighbors')
-plt.xlabel('Number of Neighbors')
-plt.ylabel('Accuracy')
-plt.grid(True)
-plt.show()
+print(f"Average Accuracy: {cv_results['accuracy']:.4f}")
+print("Average Classification Report:")
+for class_name, metrics in cv_results['classification_report'].items():
+    print(f"{class_name}: {metrics}")
