@@ -4,11 +4,11 @@ from scipy.stats import shapiro, kstest, anderson
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
-data = pd.read_csv("E:\VU\VU jaar 1\MQS\\full_dataset_with_features.csv")
+data = pd.read_csv("E:\VU\VU jaar 1\MQS\\normality_check_2.csv")
 
 numeric_features = data.select_dtypes(include=[np.number]).columns.tolist()
 numeric_features.remove('id')
-numeric_features.remove('Unnamed: 0')
+numeric_features.remove('Time (s)')
 print(numeric_features)
 
 def check_normality(data, column):
@@ -18,7 +18,14 @@ def check_normality(data, column):
     plt.figure(figsize=(12, 6))
     plt.subplot(1, 2, 1)
     data[column].hist(bins=30, edgecolor='k', alpha=0.7)
-    plt.xlabel(column)
+
+    if column == 'Height':
+        plt.xlabel('Height (m)')
+    elif column == 'Velocity':
+        plt.xlabel('Velocity (m/s)')
+    else:
+        plt.xlabel(f'{column} (m/s^2)')
+
     plt.ylabel('Frequency')
     plt.title('Histogram')
 
@@ -26,7 +33,8 @@ def check_normality(data, column):
     plt.subplot(1, 2, 2)
     stats.probplot(data[column], dist="norm", plot=plt)
     plt.title('Q-Q Plot')
-    plt.show()
+    plt.savefig(f'Graphs/{column}.png')
+    #plt.show()
 
     # # Shapiro-Wilk Test
     # stat, p_shapiro = shapiro(data[column])
