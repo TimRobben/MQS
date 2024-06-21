@@ -10,11 +10,13 @@ import matplotlib.pyplot as plt
 
 def load_and_split_data(file_path, n_splits=5, random_state=42):
     """
-    Load the dataset, separate features and target, and split into training and testing sets
-    using stratified group k-fold cross-validation to ensure that each group is in the test set once.
+    Load the dataset, select specified features, separate features and target, 
+    and split into training and testing sets using stratified group k-fold cross-validation 
+    to ensure that each group is in the test set once.
     
     Parameters:
     file_path (str): Path to the CSV file
+    feature_list (list): List of features to include in the train/test split
     n_splits (int): Number of splits for cross-validation
     random_state (int): Random seed for reproducibility
     
@@ -23,9 +25,10 @@ def load_and_split_data(file_path, n_splits=5, random_state=42):
     """
     # Load the dataset
     data = pd.read_csv(file_path)
-    
+    feature_list = ['height_mean' ,'Y_acc_std', 'Y_acc_mean', 'height_std']
     # Separate features and target
     X = data.drop(columns=['id', 'genre'])
+    #X = data[feature_list]
     y = data['genre']
     groups = data['id']
     
