@@ -38,13 +38,13 @@ def merge_csv_files(directory_path, output_file):
     return merged_df
 
 # Example usage
-directory_path = 'E:\VU\VU jaar 1\MQS'  # Update with your directory path
-output_file = 'E:\VU\VU jaar 1\MQS\merged_final.csv'  # Update with your desired output file path
-merged_df = merge_csv_files(directory_path, output_file)
+# directory_path = 'Data/Full_data/full_orig_data/'  # Update with your directory path
+# output_file = 'E:\VU\VU jaar 1\MQS\\normality_check.csv'  # Update with your desired output file path
+# merged_df = merge_csv_files(directory_path, output_file)
 
-# Display the merged DataFrame
-print("Merged DataFrame:")
-print(merged_df)
+# # Display the merged DataFrame
+# print("Merged DataFrame:")
+# print(merged_df)
 
 def percent_missing(path):
     data = pd.read_csv(path)
@@ -55,14 +55,20 @@ def percent_missing(path):
     percent_missing = data.isnull().sum() * 100 / len(data)
     print("percentage missing:", percent_missing)
 
-#percent_missing('Data/Full_data/full_orig_data/full_dataset_judith_run_1.csv')
+#percent_missing('Data/Full_data/full_orig_data/full_dataset_tim_run_1.csv')
 
 def remove_first_2_columns(path):
+    percent_missing(path)
     df = pd.read_csv(path)
-    #df.drop(df.columns[df.columns.str.contains('^Unnamed')], axis=1, inplace=True)
+    df.drop(df.columns[df.columns.str.contains('^Unnamed')], axis=1, inplace=True)
     if 'filtered_Unnamed: 0.1' in df.columns:
         df.drop(columns=['filtered_Unnamed: 0.1'], inplace=True)
     df.to_csv(path, index=False)
     percent_missing(path)
 
-#remove_first_2_columns('Data/Full_data/hp_data/highpass_judith_run_2.csv')
+#remove_first_2_columns('Data/Full_data/full_orig_data/full_dataset_viv_run_2.csv')
+def count_instances_per_id(path, id_column):
+    df = pd.read_csv(path)
+    return print(df[id_column].value_counts())
+
+#count_instances_per_id('E:\VU\VU jaar 1\MQS\\full_dataset_with_features.csv', 'id')

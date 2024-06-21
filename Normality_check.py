@@ -4,11 +4,11 @@ from scipy.stats import shapiro, kstest, anderson
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
-data = pd.read_csv("Data/Full_data/hp_data/highpass_tim_run_1.csv")
+data = pd.read_csv("E:\VU\VU jaar 1\MQS\\full_dataset_with_features.csv")
 
 numeric_features = data.select_dtypes(include=[np.number]).columns.tolist()
 numeric_features.remove('id')
-numeric_features.remove('Time (s)')
+numeric_features.remove('Unnamed: 0')
 print(numeric_features)
 
 def check_normality(data, column):
