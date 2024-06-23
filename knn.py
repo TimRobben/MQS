@@ -111,12 +111,14 @@ def plot_confusion_matrix(cm, class_names):
     cm (array): Confusion matrix
     class_names (list): List of class names
     """
-    cmd = ConfusionMatrixDisplay(cm, display_labels=class_names)
-    
+    cm = cm.astype(int)  # Ensure the confusion matrix contains integer values
     fig, ax = plt.subplots(figsize=(10, 7))
-    cmd.plot(ax=ax, cmap='Blues')
+    cmd = ConfusionMatrixDisplay(cm, display_labels=class_names)
+    cmd.plot(ax=ax, cmap='Blues', values_format='d')
     plt.title('Confusion Matrix')
-    plt.show()
+    plt.savefig('Graphs/confusion.png')
+    #plt.show()
+
 
 # Example usage
 file_path = 'E:/VU/VU jaar 1/MQS/full_dataset_with_features.csv'

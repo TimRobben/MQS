@@ -15,6 +15,7 @@ data = pd.read_csv('E:\VU\VU jaar 1\MQS\\full_dataset_with_features.csv')
 features = data.drop(columns=['id', 'genre'])
 labels = data['genre'].astype('category').cat.codes
 ids = data['id']
+genres = data['genre'].astype('category').cat.categories
 
 # Scale the features
 scaler = StandardScaler()
@@ -90,32 +91,37 @@ def train_and_evaluate(train_sequences, test_sequences, input_shape, output_size
     model.fit(train_x, train_y, epochs=num_epochs, batch_size=batch_size, verbose=0)
     
     loss, accuracy, precision, recall, f1 = model.evaluate(test_x, test_y, verbose=0)
-    return accuracy, precision, recall, f1
+    return accuracy, precision, recall, f1, test_y
 
 # Set parameters
 input_shape = (window_size, features_array.shape[1])
 output_size = len(data['genre'].unique())
 
 # Perform leave-one-out cross-validation
-accuracies = []
-precisions = []
-recalls = []
-f1_scores = []
+accuracies = {genre: [] for genre in genres}
+precisions = {genre: [] for genre in genres}
+recalls = {genre: [] for genre in genres}
+f1_scores = {genre: [] for genre in genres}
 
 for train_sequences, test_sequences in results:
-    accuracy, precision, recall, f1 = train_and_evaluate(train_sequences, test_sequences, input_shape, output_size)
-    accuracies.append(accuracy)
-    precisions.append(precision)
-    recalls.append(recall)
-    f1_scores.append(f1)
+    accuracy, precision, recall, f1, test_y = train_and_evaluate(train_sequences, test_sequences, input_shape, output_size)
+    for idx, genre_idx in enumerate(test_y):
+        genre = genres[genre_idx]
+        accuracies[genre].append(accuracy)
+        precisions[genre].append(precision)
+        recalls[genre].append(recall)
+        f1_scores[genre].append(f1)
 
 # Display the average metrics
-average_accuracy = np.mean(accuracies)
-average_precision = np.mean(precisions)
-average_recall = np.mean(recalls)
-average_f1 = np.mean(f1_scores)
+for genre in genres:
+    average_accuracy = np.mean(accuracies[genre])
+    average_precision = np.mean(precisions[genre])
+    average_recall = np.mean(recalls[genre])
+    average_f1 = np.mean(f1_scores[genre])
 
-print(f'Average Accuracy: {average_accuracy, accuracies}')
-print(f'Average Precision: {average_precision, precisions}')
-print(f'Average Recall: {average_recall, recalls}')
-print(f'Average F1 Score: {average_f1, f1_scores}')
+    print(f'Genre: {genre}')
+    print(f'Average Accuracy: {average_accuracy}')
+    print(f'Average Precision: {average_precision}')
+    print(f'Average Recall: {average_recall}')
+    print(f'Average F1 Score: {average_f1}')
+    print()
