@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import numpy as np
 import matplotlib.pyplot as plt
 
-def load_and_split_data(file_path, n_splits=5, random_state=42):
+def load_and_split_data(file_path, feature_list, n_splits=5, random_state=42):
     """
     Load the dataset, select specified features, separate features and target, 
     and split into training and testing sets using stratified group k-fold cross-validation 
@@ -25,10 +25,9 @@ def load_and_split_data(file_path, n_splits=5, random_state=42):
     """
     # Load the dataset
     data = pd.read_csv(file_path)
-    feature_list = ['height_mean' ,'Y_acc_std', 'Y_acc_mean', 'height_std']
+    
     # Separate features and target
     X = data.drop(columns=['id', 'genre'])
-    #X = data[feature_list]
     y = data['genre']
     groups = data['id']
     
@@ -40,12 +39,13 @@ def load_and_split_data(file_path, n_splits=5, random_state=42):
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
         yield X_train, X_test, y_train, y_test
 
-def train_evaluate_knn_cv(file_path, n_neighbors=5, n_splits=5):
+def train_evaluate_knn_cv(file_path, feature_list, n_neighbors=5, n_splits=5):
     """
-    Train and evaluate a k-NN classifier using cross-validation with group splits.
+    Train and evaluate a k-NN classifier using cross-validation with group splits and hyperparameter optimization.
     
     Parameters:
     file_path (str): Path to the CSV file
+    feature_list (list): List of features to include in the train/test split
     n_neighbors (int): Number of neighbors for k-NN
     n_splits (int): Number of splits for cross-validation
     
@@ -54,8 +54,9 @@ def train_evaluate_knn_cv(file_path, n_neighbors=5, n_splits=5):
     """
     accuracies = []
     classification_reports = []
+    confusion_matrices = []
 
-    for X_train, X_test, y_train, y_test in load_and_split_data(file_path, n_splits=n_splits):
+    for X_train, X_test, y_train, y_test in load_and_split_data(file_path, feature_list, n_splits=n_splits):
         # Define the preprocessor
         preprocessor = ColumnTransformer(
             transformers=[
@@ -75,12 +76,11 @@ def train_evaluate_knn_cv(file_path, n_neighbors=5, n_splits=5):
         y_pred_knn = knn_model.predict(X_test)
         knn_accuracy = accuracy_score(y_test, y_pred_knn)
         knn_classification_report = classification_report(y_test, y_pred_knn, target_names=np.unique(y_train), output_dict=True)
+        knn_confusion_matrix = confusion_matrix(y_test, y_pred_knn, labels=np.unique(y_train))
 
         accuracies.append(knn_accuracy)
         classification_reports.append(knn_classification_report)
-
-        # Plot confusion matrix for the current fold
-        plot_confusion_matrix(y_test, y_pred_knn, np.unique(y_train))
+        confusion_matrices.append(knn_confusion_matrix)
 
     avg_accuracy = np.mean(accuracies)
 
@@ -95,37 +95,41 @@ def train_evaluate_knn_cv(file_path, n_neighbors=5, n_splits=5):
         return mean_dict
 
     avg_classification_report = mean_nested_dicts(classification_reports)
+    avg_confusion_matrix = np.mean(confusion_matrices, axis=0)
 
     return {
         'accuracy': avg_accuracy,
-        'classification_report': avg_classification_report
+        'classification_report': avg_classification_report,
+        'confusion_matrix': avg_confusion_matrix
     }
 
-def plot_confusion_matrix(y_true, y_pred, class_names):
+def plot_confusion_matrix(cm, class_names):
     """
     Plot a confusion matrix.
     
     Parameters:
-    y_true (pd.Series): True labels
-    y_pred (pd.Series): Predicted labels
+    cm (array): Confusion matrix
     class_names (list): List of class names
     """
-    cm = confusion_matrix(y_true, y_pred, labels=class_names)
     cmd = ConfusionMatrixDisplay(cm, display_labels=class_names)
     
     fig, ax = plt.subplots(figsize=(10, 7))
     cmd.plot(ax=ax, cmap='Blues')
     plt.title('Confusion Matrix')
-    #plt.show()
+    plt.show()
 
 # Example usage
 file_path = 'E:/VU/VU jaar 1/MQS/full_dataset_with_features.csv'
+feature_list = ['height_mean', 'Y_acc_std', 'Y_acc_mean', 'height_std']
 
 # Train and evaluate the k-NN model using 5-fold cross-validation
-n_neighbors = 10
-cv_results = train_evaluate_knn_cv(file_path, n_neighbors=n_neighbors, n_splits=5)
+n_neighbors = 3
+cv_results = train_evaluate_knn_cv(file_path, feature_list, n_neighbors=n_neighbors, n_splits=5)
 
 print(f"Average Accuracy: {cv_results['accuracy']:.4f}")
 print("Average Classification Report:")
 for class_name, metrics in cv_results['classification_report'].items():
     print(f"{class_name}: {metrics}")
+
+# Plot the average confusion matrix
+plot_confusion_matrix(cv_results['confusion_matrix'], np.unique(pd.read_csv(file_path)['genre']))

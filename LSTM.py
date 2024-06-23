@@ -46,62 +46,76 @@ for train_index, test_index in group_kfold.split(features_array, labels_array, g
     
     results.append((train_sequences, test_sequences))
 
+# Define custom metrics
+def precision_m(y_true, y_pred):
+    y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), depth=y_pred.shape[-1]), tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    true_positives = tf.reduce_sum(tf.round(tf.clip_by_value(y_true * y_pred, 0, 1)))
+    predicted_positives = tf.reduce_sum(tf.round(tf.clip_by_value(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + tf.keras.backend.epsilon())
+    return precision
+
+def recall_m(y_true, y_pred):
+    y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), depth=y_pred.shape[-1]), tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    true_positives = tf.reduce_sum(tf.round(tf.clip_by_value(y_true * y_pred, 0, 1)))
+    possible_positives = tf.reduce_sum(tf.round(tf.clip_by_value(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + tf.keras.backend.epsilon())
+    return recall
+
+def f1_m(y_true, y_pred):
+    precision = precision_m(y_true, y_pred)
+    recall = recall_m(y_true, y_pred)
+    return 2 * ((precision * recall) / (precision + recall + tf.keras.backend.epsilon()))
+
 # Define the LSTM model
-def create_lstm_model(input_shape, output_size, lstm_units, learning_rate):
+def create_lstm_model(input_shape, output_size):
     model = Sequential()
-    model.add(LSTM(lstm_units, input_shape=input_shape, return_sequences=False))
+    model.add(LSTM(65, input_shape=input_shape, return_sequences=False))
     model.add(Dense(output_size, activation='softmax'))
-    model.compile(optimizer=Adam(learning_rate=learning_rate), 
+    model.compile(optimizer=Adam(learning_rate=0.0056), 
                   loss='sparse_categorical_crossentropy', 
-                  metrics=['accuracy'])
+                  metrics=['accuracy', precision_m, recall_m, f1_m])
     return model
 
 # Training and evaluation function
-def train_and_evaluate(train_sequences, test_sequences, input_shape, output_size, lstm_units, learning_rate, num_epochs=10, batch_size=32):
+def train_and_evaluate(train_sequences, test_sequences, input_shape, output_size, num_epochs=10, batch_size=65):
     train_x = np.array([seq[0] for seq in train_sequences])
     train_y = np.array([seq[1] for seq in train_sequences])
     test_x = np.array([seq[0] for seq in test_sequences])
     test_y = np.array([seq[1] for seq in test_sequences])
 
-    model = create_lstm_model(input_shape, output_size, lstm_units, learning_rate)
+    model = create_lstm_model(input_shape, output_size)
     
     model.fit(train_x, train_y, epochs=num_epochs, batch_size=batch_size, verbose=0)
     
-    loss, accuracy = model.evaluate(test_x, test_y, verbose=0)
-    return accuracy
-
-# Objective function for scipy.optimize.differential_evolution
-def objective(params):
-    lstm_units, learning_rate, batch_size = params
-    lstm_units = int(lstm_units)
-    learning_rate = float(learning_rate)
-    batch_size = int(batch_size)
-
-    accuracies = []
-
-    for train_sequences, test_sequences in results:
-        accuracy = train_and_evaluate(train_sequences, test_sequences, input_shape, output_size, lstm_units, learning_rate, batch_size=batch_size)
-        accuracies.append(accuracy)
-
-    # Return the negative average accuracy as the objective value to be minimized
-    return -np.mean(accuracies)
+    loss, accuracy, precision, recall, f1 = model.evaluate(test_x, test_y, verbose=0)
+    return accuracy, precision, recall, f1
 
 # Set parameters
 input_shape = (window_size, features_array.shape[1])
 output_size = len(data['genre'].unique())
 
-# Define bounds for the hyperparameters
-bounds = [(10, 100), (1e-5, 1e-2), (16, 64)]
+# Perform leave-one-out cross-validation
+accuracies = []
+precisions = []
+recalls = []
+f1_scores = []
 
-# Perform hyperparameter optimization using scipy.optimize.differential_evolution
-result = differential_evolution(objective, bounds, strategy='best1bin', maxiter=50, popsize=15, tol=0.01, mutation=(0.5, 1), recombination=0.7)
+for train_sequences, test_sequences in results:
+    accuracy, precision, recall, f1 = train_and_evaluate(train_sequences, test_sequences, input_shape, output_size)
+    accuracies.append(accuracy)
+    precisions.append(precision)
+    recalls.append(recall)
+    f1_scores.append(f1)
 
-# Get the best parameters
-best_params = result.x
-best_lstm_units = int(best_params[0])
-best_learning_rate = float(best_params[1])
-best_batch_size = int(best_params[2])
+# Display the average metrics
+average_accuracy = np.mean(accuracies)
+average_precision = np.mean(precisions)
+average_recall = np.mean(recalls)
+average_f1 = np.mean(f1_scores)
 
-print(f'Best LSTM Units: {best_lstm_units}')
-print(f'Best Learning Rate: {best_learning_rate}')
-print(f'Best Batch Size: {best_batch_size}')
+print(f'Average Accuracy: {average_accuracy, accuracies}')
+print(f'Average Precision: {average_precision, precisions}')
+print(f'Average Recall: {average_recall, recalls}')
+print(f'Average F1 Score: {average_f1, f1_scores}')
